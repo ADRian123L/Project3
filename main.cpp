@@ -4,28 +4,30 @@
 #include <string>
 #include <vector>
 
-int dfs(int                                  start,
-        int                                  end,
-        const std::vector<std::vector<int>> &graph,
-        std::vector<int>                    &dp);
+std::string dfs(int                                  start,
+                int                                  end,
+                const std::vector<std::vector<int>> &graph,
+                std::vector<int>                    &dp);
 
-bool search(int x, int y, const std::vector<std::vector<int>> &graph) {
+std::string search(int x, int y, const std::vector<std::vector<int>> &graph) {
     std::vector<int> traveled(x * y, 0);
     return dfs(0, x * y - 1, graph, traveled);
 }
 
-int dfs(int                                  start,
-        int                                  end,
-        const std::vector<std::vector<int>> &graph,
-        std::vector<int>                    &travelled) {
+std::string dfs(int                                  start,
+                int                                  end,
+                const std::vector<std::vector<int>> &graph,
+                std::vector<int>                    &travelled) {
     if (start == end)
-        return true;
+        return std::string(" ");
     travelled.at(start) = 1;
+    std::string returned;
     for (int i = 0; i < 4; ++i)
         if (graph.at(start).at(i) != -1 && !travelled.at(graph.at(start).at(i)))
-            if (dfs(graph.at(start).at(i), end, graph, travelled))
-                return true;
-    return false;
+            if ((returned =
+                     dfs(graph.at(start).at(i), end, graph, travelled)) != "")
+                return std::to_string(i) + returned;
+    return std::string();
 }
 
 int main() {
@@ -58,6 +60,11 @@ int main() {
     */
     std::cout << "Searching: " << std::endl;
     std::cout << std::boolalpha;
-    std::cout << search(x, y, graph) << std::endl;
+    std::string hash   = "ESWN";
+    std::string answer = search(x, y, graph);
+    for (auto &ptr : answer)
+        if (isdigit(ptr))
+            ptr = hash.at(ptr - '0');
+    std::cout << answer << std::endl;
     return 0;
 }
