@@ -1,33 +1,64 @@
 #include <algorithm>
+#include <fstream>
 #include <initializer_list>
 #include <iostream>
+#include <iterator>
+#include <optional>
+#include <sstream>
 #include <string>
 #include <vector>
 
-std::string dfs(int                                  start,
-                int                                  end,
-                const std::vector<std::vector<int>> &graph,
-                std::vector<int>                    &dp);
+using Graph = std::vector<std::vector<int>>;
 
-std::string search(int x, int y, const std::vector<std::vector<int>> &graph) {
-    std::vector<int> traveled(x * y, 0);
-    return dfs(0, x * y - 1, graph, traveled);
+std::optional<std::string>
+dfs_new(int start, int end, const Graph &graph, std::vector<bool> &visited) {
+    if (start == end) return std::string(" ");
+    visited.at(start) = true;
+    for (auto it{graph.at(start).begin()}; it != graph.at(start).end(); ++it) {
+        if (*it != -1 && !visited.at(*it)) {
+            auto path = dfs_new(*it, end, graph, visited);
+            if (path.has_value()) {
+                auto direction{std::distance(graph.at(start).begin(), it)};
+                return std::to_string(direction) + path.value();
+            }
+        }
+    }
+
+    for (const auto &nextVertex : graph.at(start)) {
+        if (nextVertex != -1 && !visited.at(nextVertex)) {
+            auto path = dfs_new(nextVertex, end, graph, visited);
+            if (path.has_value()) {
+                auto direction = (&nextVertex - &graph.at(start).front());
+                return std::to_string(direction) + path.value();
+            }
+        }
+    }
+
+    return std::nullopt;
 }
 
-std::string dfs(int                                  start,
-                int                                  end,
-                const std::vector<std::vector<int>> &graph,
-                std::vector<int>                    &travelled) {
-    if (start == end)
-        return std::string(" ");
-    travelled.at(start) = 1;
-    std::string returned;
-    for (int i = 0; i < 4; ++i)
-        if (graph.at(start).at(i) != -1 && !travelled.at(graph.at(start).at(i)))
-            if ((returned =
-                     dfs(graph.at(start).at(i), end, graph, travelled)) != "")
-                return std::to_string(i) + returned;
-    return std::string();
+std::optional<std::string>
+dfs(int, int, const std::vector<std::vector<int>> &, std::vector<bool> &);
+
+std::string search(int x, int y, const std::vector<std::vector<int>> &graph) {
+    std::vector<bool> visited(x * y, false);
+    return dfs(0, x * y - 1, graph, visited).value();
+}
+
+std::optional<std::string> dfs(int                                  start,
+                               int                                  end,
+                               const std::vector<std::vector<int>> &graph,
+                               std::vector<bool>                   &visited) {
+    if (start == end) return std::string(" ");
+    visited.at(start) = true;
+    for (int i = 0; i < 4; ++i) {
+        if (graph.at(start).at(i) != -1 && !visited.at(graph.at(start).at(i))) {
+            auto returned = dfs(graph.at(start).at(i), end, graph, visited);
+            if (returned.has_value())
+                return std::to_string(i) + returned.value();
+        }
+    }
+    return std::nullopt;
 }
 
 int main() {
@@ -58,13 +89,24 @@ int main() {
         counter++;
     }
     */
-    std::cout << "Searching: " << std::endl;
-    std::cout << std::boolalpha;
-    std::string hash   = "ESWN";
-    std::string answer = search(x, y, graph);
+    std::string       map    = "ESWN";
+    std::string       answer = search(x, y, graph);
+    std::stringstream path;
     for (auto &ptr : answer)
-        if (isdigit(ptr))
-            ptr = hash.at(ptr - '0');
-    std::cout << answer << std::endl;
+        if (isdigit(ptr)) path << map.at(ptr - '0') << " ";
+    path.str().pop_back();
+
+    std::cout << path.str() << std::endl;
+
+    std::ofstream output("output.txt");
+    if (output.is_open()) {
+        output << path.str();
+        output.close();
+    }
+    else {
+        std::cerr << "Error opening output file." << std::endl;
+        return 1;
+    }
+
     return 0;
 }
