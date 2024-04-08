@@ -15,12 +15,12 @@ using INT    = std::numeric_limits<int>;
 
 std::optional<std::size_t> heuristic(std::size_t        x,
                                      std::size_t        y,
-                                     Vertex             vertex,
+                                     std::size_t        next,
                                      const Graph       &graph,
                                      std::vector<bool> &visited) {
     std::vector<int> neighbors;
     int              dx, dy;
-    for (const auto &it : *vertex) {
+    for (const auto &it : graph.at(next)) {
         dx = dy = INT::max();
         if (it != -1 && !visited.at(it)) {
             dx = (graph.size() - (it + 1)) / x;
@@ -28,8 +28,26 @@ std::optional<std::size_t> heuristic(std::size_t        x,
             neighbors.push_back(dx + dy);
         }
     }
+    if (neighbors.empty()) return std::nullopt;
     auto ite = std::min_element(neighbors.begin(), neighbors.end());
     return std::distance(neighbors.begin(), ite);
+}
+
+std::optional<std::string> dfsHeuristic(std::size_t        x,
+                                        std::size_t        y,
+                                        std::size_t        next,
+                                        const Graph       &graph,
+                                        std::vector<bool> &visited) {
+    if (next == graph.size() - 1) return std::string();
+    visited.at(next) = true;
+    for (auto i = 0ul; i < graph.at(next).size(); ++i) {
+        auto go = heuristic(x, y, next, graph, visited);
+        if (go.has_value()) {
+            auto path = dfsHeuristic(x, y, go.value(), graph, visited);
+            return std::to_string(i) + path.value();
+        }
+    }
+    return std::nullopt;
 }
 
 std::optional<std::string>
@@ -50,7 +68,7 @@ dfs_n(std::size_t next, const Graph &graph, std::vector<bool> &visited) {
 
 std::optional<std::string>
 dfs(Vertex vertex, const Graph &graph, std::vector<bool> &visited) {
-    auto pos = std::distance(graph.cbegin(), vertex);
+    std::size_t pos = std::distance(graph.cbegin(), vertex);
     if (pos == graph.size() - 1) return std::string(" ");
     visited.at(pos) = true;
     for (const auto &it : *vertex) {
@@ -132,14 +150,11 @@ int main() {
     */
     std::string map    = "ESWN";
     std::string answer = search(x, y, graph);
-    std::cout << answer << std::endl;
-    std::cout << "1" << std::endl;
+
     std::stringstream path;
     for (auto &ptr : answer)
-        if (isdigit(ptr))
-            path << map.at(ptr - '0') << " ";
+        if (isdigit(ptr)) path << map.at(ptr - '0') << " ";
     path.str().pop_back();
-    std::cout << "2" << std::endl;
     std::cout << path.str() << std::endl;
 
     std::ofstream output("output.txt");
