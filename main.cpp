@@ -29,14 +29,12 @@ std::optional<std::size_t> heuristic(std::size_t        x,
         }
     }
     auto ite = std::min_element(neighbors.begin(), neighbors.end());
-
     return std::distance(neighbors.begin(), ite);
 }
 
 std::optional<std::string>
 dfs_n(std::size_t next, const Graph &graph, std::vector<bool> &visited) {
-    if (next == graph.size() - 1)
-        return std::string(" ");
+    if (next == graph.size() - 1) return std::string(" ");
     visited.at(next) = true;
     for (const auto &it : graph.at(next)) {
         if (it != -1 && !visited.at(next)) {
@@ -53,8 +51,7 @@ dfs_n(std::size_t next, const Graph &graph, std::vector<bool> &visited) {
 std::optional<std::string>
 dfs(Vertex vertex, const Graph &graph, std::vector<bool> &visited) {
     auto pos = std::distance(graph.cbegin(), vertex);
-    if (pos == graph.size() - 1)
-        return std::string(" ");
+    if (pos == graph.size() - 1) return std::string(" ");
     visited.at(pos) = true;
     for (const auto &it : *vertex) {
         if (it != -1 && !visited.at(it)) {
@@ -70,8 +67,7 @@ dfs(Vertex vertex, const Graph &graph, std::vector<bool> &visited) {
 
 std::optional<std::string>
 dfs_new(int start, int end, const Graph &graph, std::vector<bool> &visited) {
-    if (start == end)
-        return std::string(" ");
+    if (start == end) return std::string(" ");
     visited.at(start) = true;
     for (auto it{graph.at(start).begin()}; it != graph.at(start).end(); ++it) {
         if (*it != -1 && !visited.at(*it)) {
@@ -94,8 +90,7 @@ std::string search(int x, int y, const std::vector<std::vector<int>> &graph) {
 
 std::optional<std::string>
 dfs(int start, int end, const Graph &graph, std::vector<bool> &visited) {
-    if (start == end)
-        return std::string(" ");
+    if (start == end) return std::string(" ");
     visited.at(start) = true;
     for (int i = 0; i < 4; ++i) {
         if (graph.at(start).at(i) != -1 && !visited.at(graph.at(start).at(i))) {
