@@ -3,16 +3,75 @@
 #include <initializer_list>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
 
-using Graph = std::vector<std::vector<int>>;
+using Graph  = std::vector<std::vector<int>>;
+using Vertex = Graph::const_iterator;
+using INT    = std::numeric_limits<int>;
+
+std::optional<std::size_t> heuristic(std::size_t        x,
+                                     std::size_t        y,
+                                     Vertex             vertex,
+                                     const Graph       &graph,
+                                     std::vector<bool> &visited) {
+    std::vector<int> neighbors;
+    int              dx, dy;
+    for (const auto &it : *vertex) {
+        dx = dy = INT::max();
+        if (it != -1 && !visited.at(it)) {
+            dx = (graph.size() - (it + 1)) / x;
+            dy = (graph.size() - (it + 1)) % y;
+            neighbors.push_back(dx + dy);
+        }
+    }
+    auto ite = std::min_element(neighbors.begin(), neighbors.end());
+
+    return std::distance(neighbors.begin(), ite);
+}
+
+std::optional<std::string>
+dfs_n(std::size_t next, const Graph &graph, std::vector<bool> &visited) {
+    if (next == graph.size() - 1)
+        return std::string(" ");
+    visited.at(next) = true;
+    for (const auto &it : graph.at(next)) {
+        if (it != -1 && !visited.at(next)) {
+            auto path = dfs_n(it, graph, visited);
+            if (path.has_value()) {
+                auto neighboor = &it - &graph.at(next).front();
+                return std::to_string(neighboor) + path.value();
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string>
+dfs(Vertex vertex, const Graph &graph, std::vector<bool> &visited) {
+    auto pos = std::distance(graph.cbegin(), vertex);
+    if (pos == graph.size() - 1)
+        return std::string(" ");
+    visited.at(pos) = true;
+    for (const auto &it : *vertex) {
+        if (it != -1 && !visited.at(it)) {
+            auto path = dfs(graph.cbegin() + it, graph, visited);
+            if (path.has_value()) {
+                auto distance = &it - &(*vertex).front();
+                return std::to_string(distance) + path.value();
+            }
+        }
+    }
+    return std::nullopt;
+}
 
 std::optional<std::string>
 dfs_new(int start, int end, const Graph &graph, std::vector<bool> &visited) {
-    if (start == end) return std::string(" ");
+    if (start == end)
+        return std::string(" ");
     visited.at(start) = true;
     for (auto it{graph.at(start).begin()}; it != graph.at(start).end(); ++it) {
         if (*it != -1 && !visited.at(*it)) {
@@ -23,33 +82,20 @@ dfs_new(int start, int end, const Graph &graph, std::vector<bool> &visited) {
             }
         }
     }
-
-    for (const auto &nextVertex : graph.at(start)) {
-        if (nextVertex != -1 && !visited.at(nextVertex)) {
-            auto path = dfs_new(nextVertex, end, graph, visited);
-            if (path.has_value()) {
-                auto direction = (&nextVertex - &graph.at(start).front());
-                return std::to_string(direction) + path.value();
-            }
-        }
-    }
-
     return std::nullopt;
 }
 
-std::optional<std::string>
-dfs(int, int, const std::vector<std::vector<int>> &, std::vector<bool> &);
+std::optional<std::string> dfs(int, int, const Graph &, std::vector<bool> &);
 
 std::string search(int x, int y, const std::vector<std::vector<int>> &graph) {
     std::vector<bool> visited(x * y, false);
-    return dfs(0, x * y - 1, graph, visited).value();
+    return dfs(graph.begin(), graph, visited).value();
 }
 
-std::optional<std::string> dfs(int                                  start,
-                               int                                  end,
-                               const std::vector<std::vector<int>> &graph,
-                               std::vector<bool>                   &visited) {
-    if (start == end) return std::string(" ");
+std::optional<std::string>
+dfs(int start, int end, const Graph &graph, std::vector<bool> &visited) {
+    if (start == end)
+        return std::string(" ");
     visited.at(start) = true;
     for (int i = 0; i < 4; ++i) {
         if (graph.at(start).at(i) != -1 && !visited.at(graph.at(start).at(i))) {
@@ -64,7 +110,7 @@ std::optional<std::string> dfs(int                                  start,
 int main() {
     int x, y, entry;
     std::cin >> x >> y;
-    std::vector<std::vector<int>> graph(x * y, std::vector<int>(4, -1));
+    Graph graph(x * y, std::vector<int>(4, -1));
     for (int i = 0; i < x * y; ++i) {
         std::cin >> entry;
         if (entry && entry + (i % y) < y) // Right
@@ -89,13 +135,16 @@ int main() {
         counter++;
     }
     */
-    std::string       map    = "ESWN";
-    std::string       answer = search(x, y, graph);
+    std::string map    = "ESWN";
+    std::string answer = search(x, y, graph);
+    std::cout << answer << std::endl;
+    std::cout << "1" << std::endl;
     std::stringstream path;
     for (auto &ptr : answer)
-        if (isdigit(ptr)) path << map.at(ptr - '0') << " ";
+        if (isdigit(ptr))
+            path << map.at(ptr - '0') << " ";
     path.str().pop_back();
-
+    std::cout << "2" << std::endl;
     std::cout << path.str() << std::endl;
 
     std::ofstream output("output.txt");
