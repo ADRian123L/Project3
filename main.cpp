@@ -9,10 +9,107 @@
 #include <string>
 #include <vector>
 
-using Graph  = std::vector<std::vector<int>>;
-using Vertex = Graph::const_iterator;
+using AdjecL = std::vector<std::vector<int>>;
 using INT    = std::numeric_limits<int>;
 
+namespace b {
+    class Graph {
+    public:
+        Graph(std::size_t size, std::size_t neighbors)
+            : graph(size, std::vector<int>(neighbors, -1)), visited(size){};
+
+        void        AddEdge(int, int, int);
+        std::string path(int, int);
+
+    private:
+        AdjecL graph;
+        enum class Direction { North, South, East, West };
+        std::vector<Direction> pathE;
+        Direction              dirct(int);
+        char                   convertoS(Direction);
+        std::vector<bool>      visited;
+        bool                   findPath(int, int);
+    };
+} // namespace b
+
+b::Graph::Direction b::Graph::dirct(int to) {
+    switch (to) {
+    case 0: {
+        return Direction::East;
+    }
+    case 1: {
+        return Direction::South;
+    }
+    case 2: {
+        return Direction::West;
+    }
+    case 3: {
+        return Direction::North;
+    }
+    default: {
+        return Direction::North;
+    }
+    }
+}
+
+void b::Graph::AddEdge(int from, int to, int pos) {
+    graph.at(from).at(pos) = to;
+}
+char b::Graph::convertoS(Direction dirct) {
+    switch (dirct) {
+    case Direction::North: {
+        return 'N';
+    }
+    case Direction::South: {
+        return 'S';
+    }
+    case Direction::East: {
+        return 'E';
+    }
+    case Direction::West: {
+        return 'W';
+    }
+    default: {
+        return 'N';
+    }
+    }
+}
+
+std::string b::Graph::path(int from, int to) {
+    std::fill(visited.begin(), visited.end(), false);
+    pathE.clear();
+    const auto found = findPath(from, to);
+    if (found) {
+        std::stringstream answer;
+        for (const auto &ite : pathE) {
+            answer << convertoS(ite) << ' ';
+        }
+        answer.str().pop_back();
+        return answer.str();
+    }
+    else {
+        return std::string();
+    }
+}
+
+bool b::Graph::findPath(int from, int to) {
+    if (from == to) {
+        return true;
+    }
+    for (const auto &ite : graph.at(from)) {
+        if (ite != -1 && !visited.at(ite)) {
+            if (findPath(ite, to)) {
+                pathE.push_back(dirct(&ite - &graph.at(from).front()));
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+using Graph  = std::vector<std::vector<int>>;
+using Vertex = Graph::const_iterator;
+// Heur
 std::optional<std::size_t> heuristic(std::size_t        x,
                                      std::size_t        y,
                                      std::size_t        next,
@@ -28,7 +125,8 @@ std::optional<std::size_t> heuristic(std::size_t        x,
             neighbors.push_back(dx + dy);
         }
     }
-    if (neighbors.empty()) return std::nullopt;
+    if (neighbors.empty())
+        return std::nullopt;
     auto ite = std::min_element(neighbors.begin(), neighbors.end());
     return std::distance(neighbors.begin(), ite);
 }
@@ -38,7 +136,8 @@ std::optional<std::string> dfsHeuristic(std::size_t        x,
                                         std::size_t        next,
                                         const Graph       &graph,
                                         std::vector<bool> &visited) {
-    if (next == graph.size() - 1) return std::string();
+    if (next == graph.size() - 1)
+        return std::string();
     visited.at(next) = true;
     for (auto i = 0ul; i < graph.at(next).size(); ++i) {
         auto go = heuristic(x, y, next, graph, visited);
@@ -52,7 +151,8 @@ std::optional<std::string> dfsHeuristic(std::size_t        x,
 
 std::optional<std::string>
 dfs_n(std::size_t next, const Graph &graph, std::vector<bool> &visited) {
-    if (next == graph.size() - 1) return std::string(" ");
+    if (next == graph.size() - 1)
+        return std::string(" ");
     visited.at(next) = true;
     for (const auto &it : graph.at(next)) {
         if (it != -1 && !visited.at(next)) {
@@ -69,7 +169,8 @@ dfs_n(std::size_t next, const Graph &graph, std::vector<bool> &visited) {
 std::optional<std::string>
 dfs(Vertex vertex, const Graph &graph, std::vector<bool> &visited) {
     std::size_t pos = std::distance(graph.cbegin(), vertex);
-    if (pos == graph.size() - 1) return std::string(" ");
+    if (pos == graph.size() - 1)
+        return std::string(" ");
     visited.at(pos) = true;
     for (const auto &it : *vertex) {
         if (it != -1 && !visited.at(it)) {
@@ -85,7 +186,8 @@ dfs(Vertex vertex, const Graph &graph, std::vector<bool> &visited) {
 
 std::optional<std::string>
 dfs_new(int start, int end, const Graph &graph, std::vector<bool> &visited) {
-    if (start == end) return std::string(" ");
+    if (start == end)
+        return std::string(" ");
     visited.at(start) = true;
     for (auto it{graph.at(start).begin()}; it != graph.at(start).end(); ++it) {
         if (*it != -1 && !visited.at(*it)) {
@@ -108,7 +210,8 @@ std::string search(int x, int y, const std::vector<std::vector<int>> &graph) {
 
 std::optional<std::string>
 dfs(int start, int end, const Graph &graph, std::vector<bool> &visited) {
-    if (start == end) return std::string(" ");
+    if (start == end)
+        return std::string(" ");
     visited.at(start) = true;
     for (int i = 0; i < 4; ++i) {
         if (graph.at(start).at(i) != -1 && !visited.at(graph.at(start).at(i))) {
@@ -120,9 +223,38 @@ dfs(int start, int end, const Graph &graph, std::vector<bool> &visited) {
     return std::nullopt;
 }
 
+std::string
+dfs_mn(int start, int end, const Graph &graph, std::vector<bool> &visited) {
+    if (start == end)
+        return std::string(" ");
+    visited.at(start) = true;
+    for (int i = 0; i < 4; ++i) {
+        if (graph.at(start).at(i) != -1 && !visited.at(graph.at(start).at(i))) {
+            std::string returned =
+                dfs_mn(graph.at(start).at(i), end, graph, visited);
+            if (!returned.empty())
+                return std::to_string(i) + returned;
+        }
+    }
+    return "";
+}
+
 int main() {
     int x, y, entry;
     std::cin >> x >> y;
+    auto *gra = new b::Graph(x * y, 4);
+    for (int i = 0; i < x * y; ++i) {
+        std::cin >> entry;
+        if (entry && entry + (i % y) < y) // Right
+            gra->AddEdge(i, (entry + i), 0);
+        if (entry && entry + 1 + i / x <= x) // Down
+            gra->AddEdge(i, (i + entry * y), 1);
+        if (entry && (i % y) - entry >= 0) // Left
+            gra->AddEdge(i, (i - entry), 2);
+        if (entry && (i / x) - entry >= 0) // Up
+            gra->AddEdge(i, (i - entry * y), 3);
+    }
+    /*
     Graph graph(x * y, std::vector<int>(4, -1));
     for (int i = 0; i < x * y; ++i) {
         std::cin >> entry;
@@ -135,31 +267,20 @@ int main() {
         if (entry && (i / x) - entry >= 0) // Up
             graph.at(i).back() = (i - entry * y);
     }
-
-    /*
-    int counter{};
-    for (auto const &vertex : graph) {
-        std::cout << "At " << counter << ": [";
-        for (auto const &neigh : vertex) {
-            std::cout << neigh << ", ";
-        }
-        std::cout << "] ";
-        std::cout << std::endl;
-        counter++;
-    }
-    */
+*/
     std::string map    = "ESWN";
     std::string answer = search(x, y, graph);
 
     std::stringstream path;
     for (auto &ptr : answer)
-        if (isdigit(ptr)) path << map.at(ptr - '0') << " ";
+        if (isdigit(ptr))
+            path << map.at(ptr - '0') << " ";
     path.str().pop_back();
-    std::cout << path.str() << std::endl;
 
     std::ofstream output("output.txt");
     if (output.is_open()) {
         output << path.str();
+        output.flush();
         output.close();
     }
     else {
