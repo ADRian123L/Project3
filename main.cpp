@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace b { // Namespace b
+namespace b { // Namespac
     using AdjecL = std::vector<std::vector<int>>;
     class Graph {
     public:
